@@ -1,0 +1,61 @@
+/* styles/globals.css */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+input, select, button, textarea {
+  font-size: 16px;
+  padding: 8px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background-color: #005bb5;
+}
+
+form label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+
+.navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #ddd;
+  padding: 12px;
+  font-size: 18px;
+}
+
+.navbar a {
+  margin-right: 16px;
+  text-decoration: none;
+  color: #0070f3;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
