@@ -6,20 +6,91 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
 import { Log } from "../types";
 
 export default function Dashboard({ logs }: { logs: Log[] }) {
+  if (!logs || logs.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+        <span className="text-6xl mb-4 inline-block">📊</span>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Data Yet</h3>
+        <p className="text-gray-600">Start logging your workouts to see your progress here!</p>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ background: "#fafafa", padding: "10px", borderRadius: "8px" }}>
-      <h3>Weight Trend</h3>
-      <LineChart width={600} height={300} data={logs}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip />
-        <Line type="monotone" dataKey="weight" stroke="#0070f3" />
-      </LineChart>
+    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 card-transition">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-gray-900">Weight Progress</h3>
+        <span className="text-3xl">📈</span>
+      </div>
+
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={logs}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis 
+            dataKey="date" 
+            stroke="#6b7280"
+            style={{ fontSize: '12px' }}
+          />
+          <YAxis 
+            stroke="#6b7280"
+            style={{ fontSize: '12px' }}
+          />
+          <Tooltip 
+            contentStyle={{
+              backgroundColor: '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              padding: '8px 12px'
+            }}
+          />
+          <Line 
+            type="monotone" 
+            dataKey="weight" 
+            stroke="#8b5cf6" 
+            strokeWidth={3}
+            dot={{ fill: '#8b5cf6', r: 5 }}
+            activeDot={{ r: 7 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
+          icon="📅"
+          label="Total Days"
+          value={logs.length}
+        />
+        <StatCard
+          icon="💪"
+          label="Workouts"
+          value={logs.filter(l => l.workout_done).length}
+        />
+        <StatCard
+          icon="⏱️"
+          label="Avg Duration"
+          value={`${Math.round(logs.reduce((sum, l) => sum + l.duration, 0) / logs.length)}m`}
+        />
+        <StatCard
+          icon="😊"
+          label="Avg Mood"
+          value={`${(logs.reduce((sum, l) => sum + l.mood, 0) / logs.length).toFixed(1)}/5`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value }: { icon: string; label: string; value: string | number }) {
+  return (
+    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 text-center">
+      <div className="text-2xl mb-2">{icon}</div>
+      <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
+      <div className="text-xs text-gray-600">{label}</div>
     </div>
   );
 }

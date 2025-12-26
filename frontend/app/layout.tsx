@@ -2,8 +2,8 @@ import "./globals.css";
 import Navbar from "../components/Navbar";
 
 export const metadata = {
-  title: "AI Fitness Coach",
-  description: "Personal AI Fitness & Habit Coach",
+  title: "AI Fitness Coach - Your Personal Health Companion",
+  description: "Track your fitness journey with AI-powered insights and personalized workout plans",
 };
 
 export default function RootLayout({
@@ -13,9 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="antialiased">
         <Navbar />
-        <main className="p-4">{children}</main>
+        <main>{children}</main>
       </body>
     </html>
   );
