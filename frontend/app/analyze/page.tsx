@@ -19,14 +19,22 @@ function AnalyzeContent() {
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
 
-  const handleAnalyze = async () => {
-    setAnalyzing(true);
-    await callApi(analyze);
-    setTimeout(() => {
-      setAnalyzing(false);
-      router.push("/progress");
-    }, 1000);
-  };
+ const handleAnalyze = async () => {
+  setAnalyzing(true);
+  const res = await callApi(analyze);
+
+  // example: store the returned name if you want
+ if (res) {
+  const userName = res.data.user?.name;
+  console.log("User name:", userName);
+}
+
+  setTimeout(() => {
+    setAnalyzing(false);
+    router.push("/progress");
+  }, 1000);
+};
+
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center p-4 page-transition">

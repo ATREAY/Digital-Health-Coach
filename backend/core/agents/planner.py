@@ -1,4 +1,5 @@
 from datetime import datetime
+from db.crud import get_logs_by_user
 from core.agents.monitoring import get_monitoring_summary
 
 def get_remaining_week_days():
@@ -38,8 +39,7 @@ def dynamic_schedule_rules(summary, logs):
 def create_dynamic_plan(user_id):
     # 1) fetch summary & logs
     summary = get_monitoring_summary(user_id)
-    from db.crud import get_recent_logs_by_user
-    logs = get_recent_logs_by_user(user_id)
+    logs = get_logs_by_user(user_id)
 
     remaining_days = get_remaining_week_days()
 

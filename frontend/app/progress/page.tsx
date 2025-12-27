@@ -14,7 +14,7 @@ export default function ProgressPage() {
 }
 
 function ProgressContent() {
-  const { logs, plans, decisions, loading } = useProgress();
+  const { logs, plans, loading, latestDecision } = useProgress();
 
   if (loading) {
     return (
@@ -67,19 +67,15 @@ function ProgressContent() {
         )}
 
         {/* AI Reasoning History */}
-        {decisions && decisions.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-gray-900">AI Insights</h2>
-              <span className="text-3xl">🧠</span>
-            </div>
-            <div className="space-y-4">
-              {decisions.map((d, i) => (
-                <DecisionCard key={i} reasoning={d.reasoning} />
-              ))}
-            </div>
+        {latestDecision && (
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-gray-900">AI Insights</h2>
+            <span className="text-3xl">🧠</span>
           </div>
-        )}
+          <DecisionCard reasoning={latestDecision.reasoning} />
+        </div>
+      )}
 
         {/* Empty State */}
         {(!logs || logs.length === 0) && (!plans || plans.length === 0) && (

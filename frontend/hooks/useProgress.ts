@@ -1,34 +1,32 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { fetchProgress } from "../services/api";
-import { Log, Decision } from "../types";
 
 export const useProgress = () => {
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
-  const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [latestDecision, setLatestDecision] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const loadProgress = async () => {
     try {
       const res = await fetchProgress();
-
-      // ✔ Correctly access the response data
       const data = res.data;
 
-      setLogs(data.logs);          // now TS knows these exist
-      setPlans(data.plans);
-      setDecisions(data.decisions);
+      setLogs(data.logs || []);
+      setPlans(data.plans || []);
 
+      // updated field
+      setLatestDecision(data.latest_decision || null);
     } catch (err) {
-      console.error("Fetch Progress Error:", err);
+      console.error("Failed to fetch progress:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
+    loadProgress();
   }, []);
 
-  return { logs, plans, decisions, loading };
+  return { logs, plans, latestDecision, loading };
 };
