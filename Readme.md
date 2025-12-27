@@ -1,4 +1,4 @@
-# 📘 AI Fitness & Habit Coach — README
+# 📘 AI Fitness & Habit Coach
 
 ## 🧠 Introduction
 
