@@ -5,6 +5,7 @@ import { saveProfile } from "../../services/api";
 import { useApi } from "../../hooks/useApi";
 import { useRouter } from "next/navigation";
 import Toast from "../../components/Toast"; // toast component we will use
+import axios from "axios";
 
 export default function ProfileForm() {
   const { callApi, loading } = useApi();
@@ -29,14 +30,28 @@ export default function ProfileForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await callApi(() => saveProfile(form));
 
-    // show toast then redirect
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-      router.push("/log");
-    }, 1800);
+    try {
+      // 1️⃣ Save profile
+      await callApi(() => saveProfile(form));
+
+      // 2️⃣ Show toast
+      setShowToast(true);
+
+      // 3️⃣ Call backend to generate plan
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE}/plan_diet/`
+      );
+
+      // 4️⃣ After little delay, redirect to plan page
+      setTimeout(() => {
+        setShowToast(false);
+        router.push("/plan");
+      }, 1200);
+
+    } catch (error) {
+      console.error("Profile save or plan generation failed:", error);
+    }
   };
 
   return (

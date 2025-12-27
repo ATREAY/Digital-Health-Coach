@@ -41,27 +41,27 @@ def get_recent_logs_by_user(user_id: str):
     return clean_logs
 
 def get_log_for_date(user_id: str, date: str):
-    """
-    Returns a single log for the given user and date.
-    Used to prevent duplicate daily logs.
-    """
     return logs.find_one({"user_id": user_id, "date": date})
 
 def update_daily_log(user_id: str, date: str, data: dict):
-    """
-    Update the daily log for the given user and date.
-    This merges activities by appending them.
-    """
     return logs.update_one(
         {"user_id": user_id, "date": date},
         {"$set": data}
     )
 
-
 # ---------- PLANS ----------
 
 def save_plan(plan: dict):
-    return plans.insert_one(plan)
+    """
+    Saves the plan. 
+    FIX: Uses replace_one with upsert=True to overwrite the user's existing plan 
+    instead of creating duplicates.
+    """
+    return plans.replace_one(
+        {"user_id": plan["user_id"]},  # 1. Look for a plan with this user_id
+        plan,                          # 2. Replace it with the new data
+        upsert=True                    # 3. If it doesn't exist, create it
+    )
 
 def get_plans_by_user(user_id: str):
     raw_plans = list(plans.find({"user_id": user_id}))
@@ -71,6 +71,13 @@ def get_plans_by_user(user_id: str):
         plan.pop("_id", None)
         clean_plans.append(plan)
     return clean_plans
+
+def get_latest_plan_by_user(user_id: str):
+    doc = plans.find_one({"user_id": user_id}, sort=[("_id", -1)])
+    if doc:
+        doc["id"] = str(doc["_id"])
+        doc.pop("_id", None)
+    return doc
 
 # ---------- DECISIONS (AI Reasoning) ----------
 
@@ -86,13 +93,11 @@ def get_decisions_by_user(user_id: str):
         clean_decisions.append(dec)
     return clean_decisions
 
+# Sanitizer
+
 def sanitize_doc(doc: dict):
     if not doc:
         return None
     doc["id"] = str(doc["_id"])
     doc.pop("_id", None)
     return doc
-
-
-
-

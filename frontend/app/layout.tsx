@@ -1,9 +1,9 @@
-import "./globals.css";
-import Navbar from "../components/Navbar";
+import Providers from "./providers"; // client wrapper
 
 export const metadata = {
   title: "AI Fitness Coach - Your Personal Health Companion",
-  description: "Track your fitness journey with AI-powered insights and personalized workout plans",
+  description:
+    "Track your fitness journey with AI-powered insights and personalized workout plans",
 };
 
 export default function RootLayout({
@@ -14,8 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <Navbar />
-        <main>{children}</main>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

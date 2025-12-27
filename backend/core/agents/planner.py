@@ -1,57 +1,124 @@
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
+from core.llm_client import generate_text
+import json
+import re
+import ast  # NEW: Library to parse Python-style dictionaries (single quotes)
 
-WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-def strength_plan_template() -> List[Dict[str, str]]:
-    return [
-        {"day": d, "activity": "Strength Training – Full Body" if i < 5 else "Active Recovery"}
-        for i, d in enumerate(WEEK_DAYS)
-    ]
-
-def fat_loss_plan_template() -> List[Dict[str, str]]:
-    return [
-        {"day": d,
-         "activity": "HIIT Session" if i % 2 == 0 else "Steady Cardio (Walk / Run)"}
-        for i, d in enumerate(WEEK_DAYS)
-    ]
-
-def endurance_plan_template() -> List[Dict[str, str]]:
-    return [
-        {"day": d,
-         "activity": "Long Endurance Run or Cycle" if i < 5 else "Light Jog or Stretching"}
-        for i, d in enumerate(WEEK_DAYS)
-    ]
-
-def mixed_plan_template() -> List[Dict[str, str]]:
-    return [
-        {"day": d,
-         "activity": "Strength + Cardio Combo" if i < 5 else "Active Recovery & Stretching"}
-        for i, d in enumerate(WEEK_DAYS)
-    ]
-
-def create_dynamic_plan(
-    user_id: str,
-    profile: Optional[dict[str, Any]] = None
-) -> List[Dict[str, str]]:
+def extract_json_str(text: str) -> str:
     """
-    Generate a weekly plan based on the user's training preference.
-
-    profile may be None — in that case, default to "mixed".
+    Helper to extract the JSON object {...} from the AI's response.
     """
+    # 1. Remove markdown code blocks like ```json ... ``` or ```python ... ```
+    text = re.sub(r"```(json|python)?\s*|\s*```", "", text)
+    
+    # 2. Find the start { and end }
+    start = text.find("{")
+    end = text.rfind("}")
+    
+    if start != -1 and end != -1:
+        return text[start : end + 1]
+    
+    return text
 
-    # Default preference if profile missing or no training_preference provided:
-    preference: str = "mixed"
-    if profile and isinstance(profile, dict):
-        preference = profile.get("training_preference", "mixed") or "mixed"
+def generate_workout_and_diet(profile: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Generate workout + diet using LLM.
+    Robustly handles both JSON (double quotes) and Python Dicts (single quotes).
+    """
+    
+    # We explicitly ask for JSON, but AI models can be stubborn.
+    prompt = f"""
+You are an expert fitness coach AI.
 
-    # Choose the correct template based on preference
-    if preference == "strength":
-        weekly_plan = strength_plan_template()
-    elif preference == "fat_loss":
-        weekly_plan = fat_loss_plan_template()
-    elif preference == "endurance":
-        weekly_plan = endurance_plan_template()
+User Profile:
+- Name: {profile.get('name', 'User')}
+- Goal: {profile.get('weight_goal', 70)} kg ({profile.get('fitness_goal', 'General Fitness')})
+- Training: {profile.get('training_preference', 'Mix')}
+- Dietary Pref: {profile.get('dietary_preference', 'None')}
+
+Task: Create a 7-day workout plan and a daily diet plan.
+
+Output STRICT JSON format only. Use DOUBLE QUOTES for all keys and strings.
+No intro text. No markdown.
+
+REQUIRED SCHEMA:
+{{
+  "workout": [
+    {{ 
+      "day": "Monday", 
+      "exercises": [ 
+         {{ "name": "Squats", "sets": "3", "reps": "12" }}
+      ] 
+    }},
+    ... (Repeat for all 7 days)
+  ],
+  "diet": {{
+    "breakfast": ["Oatmeal", "Boiled Eggs"],
+    "lunch": ["Grilled Chicken Salad"],
+    "snacks": ["Almonds"],
+    "dinner": ["Salmon"]
+  }}
+}}
+"""
+    # 1. Get Text from LLM
+    llm_output = generate_text(prompt)
+    
+    # DEBUG: Print what the AI actually sent so we can see errors in terminal
+    print(f"--- LLM RAW OUTPUT ---\n{llm_output}\n----------------------")
+
+    # 2. Clean and Extract
+    clean_str = extract_json_str(llm_output)
+
+    try:
+        # ATTEMPT 1: Standard JSON parsing (Expects double quotes)
+        data = json.loads(clean_str)
+        
+    except json.JSONDecodeError:
+        print("Standard JSON parsing failed. Trying Python eval...")
+        try:
+            # ATTEMPT 2: Python Literal Eval (Handles single quotes & trailing commas)
+            data = ast.literal_eval(clean_str)
+        except Exception as e:
+            print(f"CRITICAL PARSING ERROR: {e}")
+            # Fallback only if BOTH methods fail
+            data = {
+                "workout": [],
+                "diet": {
+                    "breakfast": ["AI Error - Could not parse plan"],
+                    "lunch": ["Please try regenerating"],
+                    "dinner": [],
+                    "snacks": []
+                }
+            }
+
+    # 3. Validation: Force the schema keys to exist
+    if not isinstance(data, dict): 
+        data = {}
+        
+    if "workout" not in data or not isinstance(data["workout"], list):
+        data["workout"] = []
+        
+    if "diet" not in data or not isinstance(data["diet"], dict):
+        data["diet"] = {
+            "breakfast": ["Healthy Choice"],
+            "lunch": ["Healthy Choice"],
+            "dinner": ["Healthy Choice"],
+            "snacks": ["Healthy Choice"]
+        }
+
+    # 4. Generate diet_text for frontend
+    diet_info = data.get("diet", {})
+    diet_text = ""
+    
+    if isinstance(diet_info, dict):
+        for k, v in diet_info.items():
+            val_str = ", ".join(v) if isinstance(v, list) else str(v)
+            diet_text += f"{k.capitalize()}: {val_str}\n"
     else:
-        weekly_plan = mixed_plan_template()
+        diet_text = str(diet_info)
 
-    return weekly_plan
+    return {
+        "workout": data.get("workout", []),
+        "diet": diet_info,
+        "diet_text": diet_text.strip(),
+    }

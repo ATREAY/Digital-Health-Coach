@@ -1,62 +1,51 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getToken } from "../services/auth";
-import axios from "axios";
+import { useEffect } from "react";
+import { getToken, clearToken } from "../services/auth";
+import { fetchCurrentUser, fetchProfile } from "../services/api";
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkUserAndProfile = async () => {
+    const checkStatus = async () => {
       const token = getToken();
 
-      // Not logged in → go to login
+      // If no token at all → go to signup
       if (!token) {
-        router.push("/login");
+        router.push("/signup");
         return;
       }
 
       try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE}/profile/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        // 1️⃣ Confirm token is valid with backend
+        await fetchCurrentUser();
 
-        // If we get a 200 with profile data
-        const profile = res.data;
+        // 2️⃣ Check if profile exists
+        const profileRes = await fetchProfile();
+        const profile = profileRes.data;
 
+        // If profile is missing any required field → profile page
         if (
-          profile &&
-          profile.name &&
-          profile.current_weight &&
-          profile.training_preference
+          !profile ||
+          !profile.name ||
+          !profile.current_weight ||
+          !profile.training_preference
         ) {
-          // Profile exists → send to log
-          router.push("/log");
-        } else {
-          // Profile exists but missing required fields → go to profile
           router.push("/profile");
-        }
-      } catch (err: any) {
-        // **Handle 404 specifically**
-        if (err.response?.status === 404) {
-          // No profile found → go to profile
-          router.push("/profile");
-        } else if (err.response?.status === 401) {
-          // Token invalid/expired → go to login
-          router.push("/login");
         } else {
-          console.error("Profile check failed:", err);
-          router.push("/login");
+          // If profile exists → plan page
+          router.push("/plan");
         }
+      } catch (err) {
+        // Anything failed: token invalid or backend error → logout & signup
+        clearToken();
+        router.push("/signup");
       }
     };
 
-    checkUserAndProfile();
+    checkStatus();
   }, []);
 
   return null;

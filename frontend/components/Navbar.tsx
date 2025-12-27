@@ -46,6 +46,10 @@ export default function Navbar() {
                   <span className="text-lg mr-1">👤</span>
                   Profile
                 </NavLink>
+                <NavLink href="/plan" isActive={isActive("/plan")}>
+                  <span className="text-lg mr-1">📅</span>
+                  Weekly Plan
+                </NavLink>
                 <NavLink href="/log" isActive={isActive("/log")}>
                   <span className="text-lg mr-1">📝</span>
                   Log

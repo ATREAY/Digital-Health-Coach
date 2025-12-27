@@ -5,6 +5,9 @@ from config import LLM_API_KEY, MODEL_NAME
 BASE_URL = "https://api.mistral.ai/v1"
 
 def generate_text(prompt: str) -> str:
+    """
+    Calls the Mistral AI endpoint and returns the generated text.
+    """
     try:
         url = f"{BASE_URL}/chat/completions"
 
@@ -26,12 +29,11 @@ def generate_text(prompt: str) -> str:
         response.raise_for_status()
         data = response.json()
 
-        # Grab content from first choice
         if "choices" in data and len(data["choices"]) > 0:
-            return data["choices"][0]["message"]["content"].strip()
+            content = data["choices"][0]["message"]["content"].strip()
+            return content
 
         return "[Mistral: No output returned]"
 
     except Exception as e:
         return f"[Mistral LLM error: {str(e)}]"
-
