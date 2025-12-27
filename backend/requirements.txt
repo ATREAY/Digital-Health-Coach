@@ -6,3 +6,5 @@ pydantic
 pytest
 python-jose 
 bcrypt
+requests
+pyJWT

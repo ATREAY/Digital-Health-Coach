@@ -58,8 +58,8 @@ Inside `backend`, create a file named `.env`:
 ```bash
 MONGO_URI=<Your MongoDB Connection URI>
 JWT_SECRET=<Your JWT secret string>
-MISTRAL_API_KEY=<Your Mistral API key>
-MISTRAL_MODEL=open-mixtral-8x22b
+LLM_API_KEY=<Your Mistral API key>
+MODEL_NAME="open-mistral-7b"
 ```
 
 5. **Start the backend server**

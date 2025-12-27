@@ -1,7 +1,7 @@
-from db.crud import get_logs_by_user
+from db.crud import get_recent_logs_by_user
 
 def get_monitoring_summary(user_id: str):
-    logs = get_logs_by_user(user_id)
+    logs = get_recent_logs_by_user(user_id)
 
     if not logs:
         return {

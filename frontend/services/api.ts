@@ -14,6 +14,9 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// services/api.ts
+export const submitLog = (data: any) => API.post("/logs/", data);
+
 export const signup = (data: any) => API.post("/auth/signup", data);
 export const login = (data: any) => API.post("/auth/login", data);
 

@@ -33,6 +33,9 @@ def create_daily_log(log: dict):
     return logs.insert_one(log)
 
 def get_logs_by_user(user_id: str):
+    return list(logs.find({"user_id": user_id}))
+
+def get_recent_logs_by_user(user_id: str):
     raw_logs = list(logs.find({"user_id": user_id}))
     clean_logs = []
     for log in raw_logs:
@@ -40,6 +43,23 @@ def get_logs_by_user(user_id: str):
         log.pop("_id", None)
         clean_logs.append(log)
     return clean_logs
+
+def get_log_for_date(user_id: str, date: str):
+    """
+    Returns a single log for the given user and date.
+    Used to prevent duplicate daily logs.
+    """
+    return logs.find_one({"user_id": user_id, "date": date})
+
+def update_daily_log(user_id: str, date: str, data: dict):
+    """
+    Update the daily log for the given user and date.
+    This merges activities by appending them.
+    """
+    return logs.update_one(
+        {"user_id": user_id, "date": date},
+        {"$set": data}
+    )
 
 
 # ---------- PLANS ----------
@@ -56,7 +76,6 @@ def get_plans_by_user(user_id: str):
         clean_plans.append(plan)
     return clean_plans
 
-
 # ---------- DECISIONS (AI Reasoning) ----------
 
 def save_decision(decision: dict):
@@ -70,5 +89,6 @@ def get_decisions_by_user(user_id: str):
         dec.pop("_id", None)
         clean_decisions.append(dec)
     return clean_decisions
+
 
 

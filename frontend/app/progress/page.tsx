@@ -14,7 +14,7 @@ export default function ProgressPage() {
 }
 
 function ProgressContent() {
-  const { logs, plans, loading, latestDecision } = useProgress();
+  const { logs, plans, loading, latestDecision, stats } = useProgress();
 
   if (loading) {
     return (
@@ -48,7 +48,7 @@ function ProgressContent() {
 
         {/* Dashboard */}
         <div className="mb-8">
-          <Dashboard logs={logs} />
+          <Dashboard logs={logs} stats={stats} />
         </div>
 
         {/* Weekly Plan */}

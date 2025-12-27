@@ -1,3 +1,5 @@
+// hooks/useProgress.ts
+
 import { useState, useEffect } from "react";
 import { fetchProgress } from "../services/api";
 
@@ -5,6 +7,7 @@ export const useProgress = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [latestDecision, setLatestDecision] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProgress = async () => {
@@ -14,9 +17,8 @@ export const useProgress = () => {
 
       setLogs(data.logs || []);
       setPlans(data.plans || []);
-
-      // updated field
       setLatestDecision(data.latest_decision || null);
+      setStats(data.stats || null);
     } catch (err) {
       console.error("Failed to fetch progress:", err);
     } finally {
@@ -28,5 +30,6 @@ export const useProgress = () => {
     loadProgress();
   }, []);
 
-  return { logs, plans, latestDecision, loading };
+  return { logs, plans, latestDecision, stats, loading };
 };
+
