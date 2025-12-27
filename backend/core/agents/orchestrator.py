@@ -8,69 +8,53 @@ from typing import Any
 
 def clean_ai_text(text: str) -> str:
     """
-    Clean up markdown and unnecessary formatting in text.
-    This removes bold markers, numbered lines, extra newlines etc.
+    Clean up AI text (remove markdown artifacts)
     """
-    # Remove markdown bold syntax
     text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
-
-    # Remove simple numbered list digits like "1. " "2. "
     text = re.sub(r"\d+\.\s+", "", text)
-
-    # Replace multiple blank lines with a single blank line
     text = re.sub(r"\n{2,}", "\n\n", text)
-
     return text.strip()
 
 def run_analyze_adapt(user_id: str) -> dict[str, Any]:
     """
-    Run the analysis pipeline:
-       - Get summary
-       - Get reasoning/chat from LLM
-       - Create a weekly (dynamic) plan
-       - Save plan
-       - Save decision (AI reasoning)
-       - Return a cleaned structured response
+    Orchestrate monitoring → reasoning → dynamic planning → save → return.
     """
     # 1) Monitoring summary
     summary = get_monitoring_summary(user_id)
 
-    # 2) Reasoning
+    # 2) Reasoning (LLM / internal logic)
     reasoning_response = decide_changes(summary)
-    raw_reasoning_text = reasoning_response.get("reasoning_text", "")
+    raw_reasoning = reasoning_response.get("reasoning_text", "")
+    cleaned_reasoning = clean_ai_text(raw_reasoning)
 
-    # Clean up text for user UI
-    cleaned_reasoning = clean_ai_text(raw_reasoning_text)
+    # 3) Get profile (with training preference)
+    profile = get_profile_by_user(user_id) or {}
+    training_pref = profile.get("training_preference", "mixed")
 
-    # 3) Create a personal dynamic plan
-    new_plan = create_dynamic_plan(user_id)
+    # 4) Create dynamic plan
+    new_plan = create_dynamic_plan(user_id, profile)
 
-    # 4) Motivation text
+    # 5) Motivation / messaging
     motivation_text = generate_motivation(reasoning_response)
 
-    # Save plan in DB (with user association)
+    # 6) Save plan & decision
     save_plan({
         "user_id": user_id,
         "plan": new_plan,
-        "focus": reasoning_response.get("focus"),
+        "focus": training_pref,  # store preference in meta
     })
 
-    # Save decision (original and cleaned)
     save_decision({
         "user_id": user_id,
         "reasoning": cleaned_reasoning,
         "meta": summary,
     })
 
-    # Fetch profile for name display
-    profile = get_profile_by_user(user_id)
-    display_name = profile.get("name") if profile else None
-
-    # Return structured response
+    # Return final structured result
     return {
         "user": {
             "id": user_id,
-            "name": display_name
+            "name": profile.get("name")
         },
         "summary": summary,
         "reasoning": cleaned_reasoning,

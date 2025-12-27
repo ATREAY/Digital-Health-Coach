@@ -9,17 +9,16 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUserAndProfile = async () => {
       const token = getToken();
 
+      // Not logged in → go to login
       if (!token) {
-        // Not logged in
         router.push("/login");
         return;
       }
 
       try {
-        // Try to fetch profile
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_API_BASE}/profile/`,
           {
@@ -27,27 +26,38 @@ export default function Home() {
           }
         );
 
-        if (res.data && res.data.name) {
-          // Profile exists
+        // If we get a 200 with profile data
+        const profile = res.data;
+
+        if (
+          profile &&
+          profile.name &&
+          profile.current_weight &&
+          profile.training_preference
+        ) {
+          // Profile exists → send to log
           router.push("/log");
         } else {
-          // Profile is empty
+          // Profile exists but missing required fields → go to profile
           router.push("/profile");
         }
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
-        // Token might be invalid → send to login
-        router.push("/login");
+      } catch (err: any) {
+        // **Handle 404 specifically**
+        if (err.response?.status === 404) {
+          // No profile found → go to profile
+          router.push("/profile");
+        } else if (err.response?.status === 401) {
+          // Token invalid/expired → go to login
+          router.push("/login");
+        } else {
+          console.error("Profile check failed:", err);
+          router.push("/login");
+        }
       }
     };
 
-    checkUser();
+    checkUserAndProfile();
   }, []);
 
-  // Optional: Return a simple loading spinner here so the screen isn't just blank
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-    </div>
-  );
+  return null;
 }

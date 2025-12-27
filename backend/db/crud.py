@@ -21,11 +21,7 @@ def upsert_user_profile(profile: dict):
 
 def get_profile_by_user(user_id):
     prof = profiles.find_one({"user_id": user_id})
-    if prof:
-        prof["id"] = str(prof["_id"])
-        prof.pop("_id", None)
-    return prof
-
+    return sanitize_doc(prof)
 
 # ---------- LOGS ----------
 
@@ -89,6 +85,14 @@ def get_decisions_by_user(user_id: str):
         dec.pop("_id", None)
         clean_decisions.append(dec)
     return clean_decisions
+
+def sanitize_doc(doc: dict):
+    if not doc:
+        return None
+    doc["id"] = str(doc["_id"])
+    doc.pop("_id", None)
+    return doc
+
 
 
 

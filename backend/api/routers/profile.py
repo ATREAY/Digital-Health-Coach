@@ -9,9 +9,12 @@ class Profile(BaseModel):
     name: str
     age: int
     height: float
+    current_weight: float           
     weight_goal: float
     fitness_goal: str
+    training_preference: str        
     start_date: str
+
 
 # Create or update the profile
 @router.post("/")
@@ -20,6 +23,7 @@ def create_profile(profile: Profile, user=Depends(get_current_user)):
     data["user_id"] = user["id"]
     upsert_user_profile(data)
     return {"status": "Profile saved successfully"}
+
 
 # Fetch the current user's profile
 @router.get("/")

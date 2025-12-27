@@ -1,59 +1,57 @@
-from datetime import datetime
-from db.crud import get_recent_logs_by_user
-from core.agents.monitoring import get_monitoring_summary
+from typing import List, Dict, Any, Optional
 
-def get_remaining_week_days():
+WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+def strength_plan_template() -> List[Dict[str, str]]:
+    return [
+        {"day": d, "activity": "Strength Training – Full Body" if i < 5 else "Active Recovery"}
+        for i, d in enumerate(WEEK_DAYS)
+    ]
+
+def fat_loss_plan_template() -> List[Dict[str, str]]:
+    return [
+        {"day": d,
+         "activity": "HIIT Session" if i % 2 == 0 else "Steady Cardio (Walk / Run)"}
+        for i, d in enumerate(WEEK_DAYS)
+    ]
+
+def endurance_plan_template() -> List[Dict[str, str]]:
+    return [
+        {"day": d,
+         "activity": "Long Endurance Run or Cycle" if i < 5 else "Light Jog or Stretching"}
+        for i, d in enumerate(WEEK_DAYS)
+    ]
+
+def mixed_plan_template() -> List[Dict[str, str]]:
+    return [
+        {"day": d,
+         "activity": "Strength + Cardio Combo" if i < 5 else "Active Recovery & Stretching"}
+        for i, d in enumerate(WEEK_DAYS)
+    ]
+
+def create_dynamic_plan(
+    user_id: str,
+    profile: Optional[dict[str, Any]] = None
+) -> List[Dict[str, str]]:
     """
-    Returns a list like:
-    ['Thu','Fri','Sat','Sun'] for remaining days
+    Generate a weekly plan based on the user's training preference.
+
+    profile may be None — in that case, default to "mixed".
     """
-    today = datetime.utcnow().weekday()  # Monday=0 ... Sunday=6
-    all_days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
-    return all_days[today+1:]
 
-def dynamic_schedule_rules(summary, logs):
-    mood = summary["mood_trend"]
-    comp = summary["completion_rate"]
-    
-    activities = []
-    # base suggestions
-    base_easy = "Walk 30 min"
-    base_mod = "Strength Training 20 min"
-    base_hard = "HIIT 20 min"
-    recovery = "Rest"
+    # Default preference if profile missing or no training_preference provided:
+    preference: str = "mixed"
+    if profile and isinstance(profile, dict):
+        preference = profile.get("training_preference", "mixed") or "mixed"
 
-    # determine intensity style
-    if comp < 50 or mood < 3:
-        style = "easy"
-    elif comp < 80 or mood < 4:
-        style = "medium"
+    # Choose the correct template based on preference
+    if preference == "strength":
+        weekly_plan = strength_plan_template()
+    elif preference == "fat_loss":
+        weekly_plan = fat_loss_plan_template()
+    elif preference == "endurance":
+        weekly_plan = endurance_plan_template()
     else:
-        style = "hard"
+        weekly_plan = mixed_plan_template()
 
-    if style == "easy":
-        return base_easy, recovery
-    if style == "medium":
-        return base_mod, base_easy
-    return base_hard, base_mod
-
-def create_dynamic_plan(user_id):
-    # 1) fetch summary & logs
-    summary = get_monitoring_summary(user_id)
-    logs = get_recent_logs_by_user(user_id)
-
-    remaining_days = get_remaining_week_days()
-
-    # 2) decide activity types for style
-    high_intensity, fallback = dynamic_schedule_rules(summary, logs)
-
-    plan = []
-    for idx, day in enumerate(remaining_days):
-        # simple alternating logic
-        if idx % 2 == 0:
-            activity = high_intensity
-        else:
-            activity = fallback
-        plan.append({"day": day, "activity": activity})
-
-    return plan
-
+    return weekly_plan
