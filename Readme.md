@@ -134,9 +134,10 @@ http://localhost:3000
 2. Create an account
 3. Login
 4. Fill **Profile**
-5. Add **Daily Logs**
-6. Click **Analyze & Adapt**
-7. View **Progress & Suggestions**
+5. View **Weekly Plans** based on user profile
+6. Add **Daily Logs**
+7. Click **Analyze & Adapt**
+8. View **Progress & Suggestions**
 
 ---
 
